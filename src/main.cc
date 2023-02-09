@@ -485,7 +485,7 @@ int main(int argc, char** argv)
         auto dependency_graph_path = "dependency-graph." + std::filesystem::path(argv[optind + i]).stem().string() + ".dot";
         cout << "Dumping dependency graph at: " << dependency_graph_path << endl;
         auto dependency_graph_file = ofstream{dependency_graph_path};
-        ooo_cpu[i]->dependency_graph.write_graphviz(dependency_graph_file);
+        ooo_cpu[i]->write_dependency_graph(dependency_graph_file);
 
         for (auto it = caches.rbegin(); it != caches.rend(); ++it)
           record_roi_stats(i, *it);

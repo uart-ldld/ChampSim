@@ -92,7 +92,8 @@ public:
     return graph[v].second;
   }
 
-  void write_graphviz(std::ostream& out) const
+  template <typename Writer>
+  void write_graphviz(std::ostream& out, Writer writer) const
   {
     using WriteGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, value_type>;
     using WriteVertex = typename boost::graph_traits<WriteGraph>::vertex_descriptor;
@@ -108,7 +109,11 @@ public:
       boost::add_edge(map.at(source(*e_it, graph)), map.at(target(*e_it, graph)), copy);
     }
 
-    boost::write_graphviz(out, copy);
+    auto writer_wrapper = [&](std::ostream& out, const auto& v) {
+      writer(out, copy[v].first, copy[v].second);
+    };
+
+    boost::write_graphviz(out, copy, writer_wrapper);
   }
 
 private:

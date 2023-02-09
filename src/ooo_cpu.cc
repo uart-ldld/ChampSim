@@ -593,6 +593,14 @@ void O3_CPU::trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterat
   }
 }
 
+void O3_CPU::write_dependency_graph(std::ostream& out)
+{
+  auto writer = [](std::ostream& out, uint64_t address, const metadata&) {
+    out << "[label=\"" << (void*)(address << LOG2_BLOCK_SIZE) << "\"]";
+  };
+  dependency_graph.write_graphviz(out, writer);
+}
+
 void O3_CPU::execute_instruction()
 {
   // out-of-order execution for non-memory instructions

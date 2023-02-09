@@ -127,6 +127,7 @@ public:
   void do_dib_update(const ooo_model_instr& instr);
   void do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
+  void write_dependency_graph(std::ostream& out);
   void do_execution(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void do_memory_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void operate_lsq();
