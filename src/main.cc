@@ -453,6 +453,15 @@ int main(int argc, char** argv)
         cout << "Heartbeat CPU " << i << " instructions: " << ooo_cpu[i]->num_retired << " cycles: " << ooo_cpu[i]->current_cycle;
         cout << " heartbeat IPC: " << heartbeat_ipc << " cumulative IPC: " << cumulative_ipc;
         cout << " (Simulation time: " << elapsed_hour << " hr " << elapsed_minute << " min " << elapsed_second << " sec) " << endl;
+
+        if (warmup_complete[i]) {
+          auto dependency_graph_path =
+              "dependency-graph." + std::filesystem::path(argv[optind + i]).stem().string() + "." + std::to_string(ooo_cpu[i]->num_retired) + ".dot";
+          cout << "Dumping dependency graph at: " << dependency_graph_path << endl;
+          auto dependency_graph_file = ofstream{dependency_graph_path};
+          ooo_cpu[i]->write_dependency_graph(dependency_graph_file);
+        }
+
         ooo_cpu[i]->next_print_instruction += STAT_PRINTING_PERIOD;
 
         ooo_cpu[i]->last_sim_instr = ooo_cpu[i]->num_retired;
@@ -481,11 +490,6 @@ int main(int argc, char** argv)
         cout << "Finished CPU " << i << " instructions: " << ooo_cpu[i]->finish_sim_instr << " cycles: " << ooo_cpu[i]->finish_sim_cycle;
         cout << " cumulative IPC: " << ((float)ooo_cpu[i]->finish_sim_instr / ooo_cpu[i]->finish_sim_cycle);
         cout << " (Simulation time: " << elapsed_hour << " hr " << elapsed_minute << " min " << elapsed_second << " sec) " << endl;
-
-        auto dependency_graph_path = "dependency-graph." + std::filesystem::path(argv[optind + i]).stem().string() + ".dot";
-        cout << "Dumping dependency graph at: " << dependency_graph_path << endl;
-        auto dependency_graph_file = ofstream{dependency_graph_path};
-        ooo_cpu[i]->write_dependency_graph(dependency_graph_file);
 
         for (auto it = caches.rbegin(); it != caches.rend(); ++it)
           record_roi_stats(i, *it);
