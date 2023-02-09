@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <getopt.h>
@@ -481,7 +482,7 @@ int main(int argc, char** argv)
         cout << " cumulative IPC: " << ((float)ooo_cpu[i]->finish_sim_instr / ooo_cpu[i]->finish_sim_cycle);
         cout << " (Simulation time: " << elapsed_hour << " hr " << elapsed_minute << " min " << elapsed_second << " sec) " << endl;
 
-        auto dependency_graph_path = "dgraph.dot";
+        auto dependency_graph_path = "dependency-graph." + std::filesystem::path(argv[optind + i]).stem().string() + ".dot";
         cout << "Dumping dependency graph at: " << dependency_graph_path << endl;
         auto dependency_graph_file = ofstream{dependency_graph_path};
         ooo_cpu[i]->dependency_graph.write_graphviz(dependency_graph_file);
