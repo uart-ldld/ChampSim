@@ -579,7 +579,7 @@ void O3_CPU::trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterat
 
   rob_it->load_address_i_depend_on = prior->is_memory ? load_addrress(*prior) : prior->load_address_i_depend_on;
 
-  if (rob_it->load_address_i_depend_on && rob_it->is_memory && load_addrress(*rob_it)) {
+  if (rob_it->load_address_i_depend_on && rob_it->is_memory) {
     if (dependency_graph.contains(load_addrress(*rob_it))) {
       /* printf("%p exits\n", (void*)load_addrress(*rob_it)); */
       const auto before = dependency_graph.before(load_addrress(*rob_it));
@@ -588,8 +588,11 @@ void O3_CPU::trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterat
         dependency_graph.remove_edge(load_addrress(*rob_it), before->first);
       }
     }
-    /* printf("add %p <- %p\n", (void*)rob_it->load_address_i_depend_on, (void*)load_addrress(*rob_it)); */
-    dependency_graph.add_edge(load_addrress(*rob_it), rob_it->load_address_i_depend_on);
+
+    if (load_addrress(*rob_it)) {
+      /* printf("add %p <- %p\n", (void*)rob_it->load_address_i_depend_on, (void*)load_addrress(*rob_it)); */
+      dependency_graph.add_edge(load_addrress(*rob_it), rob_it->load_address_i_depend_on);
+    }
   }
 }
 
