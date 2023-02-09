@@ -17,6 +17,7 @@
 #include "ooo_cpu.h"
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 #include "cache.h"
@@ -550,6 +551,8 @@ void O3_CPU::do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator 
     }
   }
 
+  trace_dependency(rob_it);
+
   if (rob_it->is_memory)
     rob_it->scheduled = INFLIGHT;
   else {
@@ -557,6 +560,28 @@ void O3_CPU::do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator 
 
     // ADD LATENCY
     rob_it->event_cycle = current_cycle + (warmup_complete[cpu] ? SCHEDULING_LATENCY : 0);
+  }
+}
+
+void O3_CPU::trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterator rob_it)
+{
+  auto prior = std::find_if(std::reverse_iterator(rob_it), std::rend(ROB), [&rob_it](auto&& ins) {
+    return std::any_of(std::cbegin(rob_it->source_registers), std::cend(rob_it->source_registers),
+                       [ins](auto reg) { return reg && instr_reg_will_produce(reg)(ins); });
+  });
+
+  if (prior == std::rend(ROB))
+    return;
+
+  auto load_addrress = [](const ooo_model_instr& ins) -> uint64_t {
+    return ins.is_memory ? ins.source_memory[0] >> LOG2_BLOCK_SIZE : 0;
+  };
+
+  rob_it->load_address_i_depend_on = prior->is_memory ? load_addrress(*prior) : prior->load_address_i_depend_on;
+
+  if (rob_it->is_memory && load_addrress(*rob_it)) {
+    dependency_graph.add_edge(load_addrress(*rob_it), rob_it->load_address_i_depend_on);
+    ++dependency_graph[rob_it->load_address_i_depend_on].heat;
   }
 }
 

@@ -24,6 +24,7 @@
 #include "block.h"
 #include "champsim.h"
 #include "delay_queue.hpp"
+#include "dependency_graph.hpp"
 #include "instruction.h"
 #include "memory_class.h"
 #include "operable.h"
@@ -99,6 +100,13 @@ public:
 
   CacheBus ITLB_bus, DTLB_bus, L1I_bus, L1D_bus;
 
+  // dependency graph
+  struct metadata {
+    int heat = 0;
+  };
+
+  champsim::dependency_graph<uint64_t, metadata> dependency_graph;
+
   void operate();
 
   // functions
@@ -118,6 +126,7 @@ public:
   void do_fetch_instruction(champsim::circular_buffer<ooo_model_instr>::iterator begin, champsim::circular_buffer<ooo_model_instr>::iterator end);
   void do_dib_update(const ooo_model_instr& instr);
   void do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
+  void trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void do_execution(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void do_memory_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void operate_lsq();
