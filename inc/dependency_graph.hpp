@@ -72,12 +72,18 @@ public:
     if ((v_it) == std::end(vertex))
       return;
 
-    Vertex u = u_it->second, v = v_it->second;
+    auto u = u_it->second, v = v_it->second;
     boost::remove_edge(u, v, graph);
-    if (!boost::in_degree(v, graph) && !boost::out_degree(v, graph)) {
-      boost::remove_vertex(v, graph);
-      vertex.erase(v_it);
-    }
+
+    auto remove_orphan = [this](auto v_it, auto v) {
+      if (!boost::in_degree(v, graph) && !boost::out_degree(v, graph)) {
+        boost::remove_vertex(v, graph);
+        vertex.erase(v_it);
+      }
+    };
+
+    remove_orphan(u_it, u);
+    remove_orphan(v_it, v);
   }
 
   T& operator[](const Key& key)
