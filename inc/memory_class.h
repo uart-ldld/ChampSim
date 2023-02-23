@@ -39,7 +39,6 @@ public:
 
   // replacement state
   uint32_t lru = std::numeric_limits<uint32_t>::max() >> 1;
-  uint8_t crit = std::numeric_limits<uint8_t>::max();
 };
 
 class MemoryRequestConsumer
