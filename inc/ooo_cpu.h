@@ -24,10 +24,13 @@
 #include "block.h"
 #include "champsim.h"
 #include "delay_queue.hpp"
-#include "dependency_graph.hpp"
 #include "instruction.h"
 #include "memory_class.h"
 #include "operable.h"
+
+#if DEPENDENCY_GRAPH
+#include "dependency_graph.hpp"
+#endif
 
 using namespace std;
 
@@ -105,7 +108,11 @@ public:
     int heat = 0;
   };
 
+#if DEPENDENCY_GRAPH
+
   champsim::dependency_graph<uint64_t, metadata> dependency_graph;
+
+#endif
 
   void operate();
 
@@ -126,8 +133,10 @@ public:
   void do_fetch_instruction(champsim::circular_buffer<ooo_model_instr>::iterator begin, champsim::circular_buffer<ooo_model_instr>::iterator end);
   void do_dib_update(const ooo_model_instr& instr);
   void do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
+#if DEPENDENCY_GRAPH
   void trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void write_dependency_graph(std::ostream& out);
+#endif
   void do_execution(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void do_memory_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator rob_it);
   void operate_lsq();

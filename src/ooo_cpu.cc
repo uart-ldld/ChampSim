@@ -551,7 +551,9 @@ void O3_CPU::do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator 
     }
   }
 
-  /* trace_dependency(rob_it); */
+#if DEPENDENCY_GRAPH
+  trace_dependency(rob_it);
+#endif
 
   if (rob_it->is_memory)
     rob_it->scheduled = INFLIGHT;
@@ -562,6 +564,8 @@ void O3_CPU::do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator 
     rob_it->event_cycle = current_cycle + (warmup_complete[cpu] ? SCHEDULING_LATENCY : 0);
   }
 }
+
+#if DEPENDENCY_GRAPH
 
 void O3_CPU::trace_dependency(champsim::circular_buffer<ooo_model_instr>::iterator rob_it)
 {
@@ -603,6 +607,8 @@ void O3_CPU::write_dependency_graph(std::ostream& out)
   };
   dependency_graph.write_graphviz(out, writer);
 }
+
+#endif
 
 void O3_CPU::execute_instruction()
 {

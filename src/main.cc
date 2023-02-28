@@ -454,6 +454,7 @@ int main(int argc, char** argv)
         cout << " heartbeat IPC: " << heartbeat_ipc << " cumulative IPC: " << cumulative_ipc;
         cout << " (Simulation time: " << elapsed_hour << " hr " << elapsed_minute << " min " << elapsed_second << " sec) " << endl;
 
+#if DEPENDENCY_GRAPH
         if (warmup_complete[i]) {
           auto dependency_graph_path =
               "dependency-graph." + std::filesystem::path(argv[optind + i]).stem().string() + "." + std::to_string(ooo_cpu[i]->num_retired) + ".dot";
@@ -461,6 +462,7 @@ int main(int argc, char** argv)
           auto dependency_graph_file = ofstream{dependency_graph_path};
           ooo_cpu[i]->write_dependency_graph(dependency_graph_file);
         }
+#endif
 
         ooo_cpu[i]->next_print_instruction += STAT_PRINTING_PERIOD;
 
