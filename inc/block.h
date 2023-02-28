@@ -45,6 +45,8 @@ public:
   std::vector<MemoryRequestProducer*> to_return;
 
   uint8_t translation_level = 0, init_translation_level = 0;
+
+  uint8_t crit = std::numeric_limits<uint8_t>::max();
 };
 
 template <>

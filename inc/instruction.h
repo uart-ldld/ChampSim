@@ -72,6 +72,8 @@ struct ooo_model_instr {
 
   uint64_t load_address_i_depend_on = 0;
 
+  uint8_t crit = std::numeric_limits<uint8_t>::max();
+
   ooo_model_instr() = default;
 
   ooo_model_instr(uint8_t cpu, input_instr instr)

@@ -551,7 +551,7 @@ void O3_CPU::do_scheduling(champsim::circular_buffer<ooo_model_instr>::iterator 
     }
   }
 
-  trace_dependency(rob_it);
+  /* trace_dependency(rob_it); */
 
   if (rob_it->is_memory)
     rob_it->scheduled = INFLIGHT;
@@ -949,6 +949,28 @@ int O3_CPU::do_translate_load(std::vector<LSQ_ENTRY>::iterator lq_it)
   return rq_index;
 }
 
+namespace
+{
+
+bool has_dependent_load(champsim::circular_buffer<ooo_model_instr>::iterator ins)
+{
+  return std::any_of(std::begin(ins->registers_instrs_depend_on_me), std::end(ins->registers_instrs_depend_on_me),
+                     [](auto dependent_ins) { return (dependent_ins->is_memory && dependent_ins->source_memory[0]) || has_dependent_load(dependent_ins); });
+}
+
+void set_child_crit(champsim::circular_buffer<ooo_model_instr>::iterator ins, uint8_t crit)
+{
+  for_each(std::begin(ins->registers_instrs_depend_on_me), std::end(ins->registers_instrs_depend_on_me), [=](auto dependent_ins) {
+    if (dependent_ins->is_memory && dependent_ins->source_memory[0]) {
+      dependent_ins->crit = crit + 1;
+    } else {
+      set_child_crit(dependent_ins, crit);
+    }
+  });
+}
+
+} // namespace
+
 int O3_CPU::execute_load(std::vector<LSQ_ENTRY>::iterator lq_it)
 {
   // add it to L1D
@@ -964,6 +986,15 @@ int O3_CPU::execute_load(std::vector<LSQ_ENTRY>::iterator lq_it)
   data_packet.asid[1] = lq_it->asid[1];
   data_packet.to_return = {&L1D_bus};
   data_packet.lq_index_depend_on_me = {lq_it};
+  if (has_dependent_load(lq_it->rob_index)) {
+    data_packet.crit = lq_it->rob_index->crit == std::numeric_limits<uint8_t>::max() ? 0 : lq_it->rob_index->crit;
+  } else {
+    data_packet.crit = lq_it->rob_index->crit;
+  }
+
+  if (data_packet.crit != std::numeric_limits<uint8_t>::max()) {
+    set_child_crit(lq_it->rob_index, data_packet.crit);
+  }
 
   int rq_index = L1D_bus.lower_level->add_rq(&data_packet);
 
@@ -1107,6 +1138,7 @@ void O3_CPU::handle_memory_return()
     for (auto lq_merged : dtlb_entry.lq_index_depend_on_me) {
       lq_merged->physical_address = splice_bits(dtlb_entry.data, lq_merged->virtual_address,
                                                 LOG2_PAGE_SIZE); // translated address
+
       lq_merged->translated = COMPLETED;
       lq_merged->event_cycle = current_cycle;
 
@@ -1138,7 +1170,6 @@ void O3_CPU::handle_memory_return()
     // remove this entry
     L1D_bus.PROCESSED.pop_front();
     --to_read;
-    ;
   }
 }
 
@@ -1164,6 +1195,7 @@ void O3_CPU::retire_rob()
         data_packet.type = RFO;
         data_packet.asid[0] = sq_it->asid[0];
         data_packet.asid[1] = sq_it->asid[1];
+        data_packet.crit = std::numeric_limits<uint8_t>::max();
 
         auto result = L1D_bus.lower_level->add_wq(&data_packet);
         if (result != -2) {

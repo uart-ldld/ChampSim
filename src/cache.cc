@@ -192,6 +192,7 @@ void CACHE::readlike_hit(std::size_t set, std::size_t way, PACKET& handle_pkt)
   BLOCK& hit_block = block[set * NUM_WAY + way];
 
   handle_pkt.data = hit_block.data;
+  hit_block.crit = handle_pkt.crit;
 
   // update prefetcher on load instruction
   if (should_activate_prefetcher(handle_pkt.type) && handle_pkt.pf_origin_level < fill_level) {
@@ -325,6 +326,7 @@ bool CACHE::filllike_miss(std::size_t set, std::size_t way, PACKET& handle_pkt)
       writeback_packet.instr_id = handle_pkt.instr_id;
       writeback_packet.ip = 0;
       writeback_packet.type = WRITEBACK;
+      writeback_packet.crit = fill_block.crit;
 
       auto result = lower_level->add_wq(&writeback_packet);
       if (result == -2)
@@ -351,6 +353,7 @@ bool CACHE::filllike_miss(std::size_t set, std::size_t way, PACKET& handle_pkt)
     fill_block.ip = handle_pkt.ip;
     fill_block.cpu = handle_pkt.cpu;
     fill_block.instr_id = handle_pkt.instr_id;
+    fill_block.crit = std::numeric_limits<uint8_t>::max();
   }
 
   if (warmup_complete[handle_pkt.cpu] && (handle_pkt.cycle_enqueued != 0))
