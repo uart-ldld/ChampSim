@@ -486,6 +486,7 @@ int main(int argc, char** argv)
       static uint64_t last_flush_num_retired[NUM_CPUS] = {};
       if (FLUSH_CRITICALITY && ooo_cpu[i]->num_retired - last_flush_num_retired[i] > FLUSH_CRITICALITY) {
         for_each(std::begin(caches), std::end(caches), [](CACHE* cache) { cache->flush_criticality(); });
+        last_flush_num_retired[i] = ooo_cpu[i]->num_retired;
       }
 
       // simulation complete
