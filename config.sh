@@ -688,6 +688,7 @@ with open(constants_header_name, 'wt') as wfp:
     wfp.write(define_fmtstr.format(name='num_cores').format(names=const_names, config=config_file))
     wfp.write('#define NUM_CACHES ' + str(len(caches)) + 'u\n')
     wfp.write('#define NUM_OPERABLES ' + str(len(cores) + len(memory_system) + 1) + 'u\n')
+    wfp.write('#define DEPENDENCY_GRAPH ' + ('1' if dependency_graph else '0') + 'u\n')
 
     for k in const_names['physical_memory']:
         if k in ['tRP', 'tRCD', 'tCAS', 'turn_around_time']:
@@ -702,7 +703,7 @@ with open('Makefile', 'wt') as wfp:
     wfp.write('CC := ' + config_file.get('CC', 'gcc') + '\n')
     wfp.write('CXX := ' + config_file.get('CXX', 'g++') + '\n')
     wfp.write('CFLAGS := ' + config_file.get('CFLAGS', '-Wall -O3') + ' -std=gnu99\n')
-    wfp.write('CXXFLAGS := ' + config_file.get('CXXFLAGS', '-Wall -O3') + ' -std=c++17' + (' -DDEPENDENCY_GRAPH=1' if dependency_graph else '') + '\n')
+    wfp.write('CXXFLAGS := ' + config_file.get('CXXFLAGS', '-Wall -O3') + ' -std=c++17\n')
     wfp.write('CPPFLAGS := ' + config_file.get('CPPFLAGS', '') + ' -Iinc -MMD -MP\n')
     wfp.write('LDFLAGS := ' + config_file.get('LDFLAGS', '') + '\n')
     wfp.write('LDLIBS := ' + config_file.get('LDLIBS', '') + '\n')
