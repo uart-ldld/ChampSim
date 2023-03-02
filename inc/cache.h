@@ -104,6 +104,8 @@ public:
 
   void print_deadlock() override;
 
+  void flush_criticality();
+
 #include "cache_modules.inc"
 
   const repl_t repl_type;

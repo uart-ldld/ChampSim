@@ -733,3 +733,8 @@ void CACHE::print_deadlock()
     std::cout << NAME << " MSHR empty" << std::endl;
   }
 }
+
+void CACHE::flush_criticality()
+{
+  std::for_each(std::begin(block), std::end(block), [](BLOCK& blk) { blk.crit = std::numeric_limits<uint8_t>::max(); });
+}
