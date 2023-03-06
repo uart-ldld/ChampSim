@@ -998,6 +998,8 @@ int O3_CPU::execute_load(std::vector<LSQ_ENTRY>::iterator lq_it)
     data_packet.crit = lq_it->rob_index->crit;
   }
 
+  data_packet.crit = data_packet.crit < THRESHOLD_CRITICALITY ? std::numeric_limits<uint8_t>::max() : data_packet.crit;
+
   if (data_packet.crit != std::numeric_limits<uint8_t>::max()) {
     set_child_crit(lq_it->rob_index, data_packet.crit);
   }

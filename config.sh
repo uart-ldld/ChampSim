@@ -124,6 +124,8 @@ dependency_graph = config_file.get('dependency_graph', False)
 
 flush_criticality = config_file.get('flush_criticality', 0)
 
+threshold_criticality = config_file.get('threshold_criticality', 0)
+
 # Index the cache array by names
 caches = {c['name']: c for c in config_file.get('cache',[])}
 
@@ -692,6 +694,7 @@ with open(constants_header_name, 'wt') as wfp:
     wfp.write('#define NUM_OPERABLES ' + str(len(cores) + len(memory_system) + 1) + 'u\n')
     wfp.write(f'#define DEPENDENCY_GRAPH {1 if dependency_graph else 0}u\n')
     wfp.write(f'#define FLUSH_CRITICALITY {flush_criticality}ul\n')
+    wfp.write(f'#define THRESHOLD_CRITICALITY {threshold_criticality}ul\n')
 
     for k in const_names['physical_memory']:
         if k in ['tRP', 'tRCD', 'tCAS', 'turn_around_time']:
