@@ -353,7 +353,7 @@ bool CACHE::filllike_miss(std::size_t set, std::size_t way, PACKET& handle_pkt)
     fill_block.ip = handle_pkt.ip;
     fill_block.cpu = handle_pkt.cpu;
     fill_block.instr_id = handle_pkt.instr_id;
-    fill_block.crit = std::numeric_limits<uint8_t>::max();
+    fill_block.crit = handle_pkt.crit;
   }
 
   if (warmup_complete[handle_pkt.cpu] && (handle_pkt.cycle_enqueued != 0))
