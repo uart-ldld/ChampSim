@@ -17,21 +17,30 @@
 
 #include <algorithm>
 #include <iterator>
-#include <map>
+#include <numeric>
+#include <vector>
 
 #include "cache.h"
 #include "util.h"
-#include <unordered_map>
 
 void CACHE::initialize_replacement() {}
 
 // find replacement victim
 uint32_t CACHE::find_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, const BLOCK* current_set, uint64_t ip, uint64_t full_addr, uint32_t type)
 {
-  // baseline LRU
-  return std::distance(current_set, std::max_element(current_set, std::next(current_set, NUM_WAY), [](const BLOCK& lhs, const BLOCK& rhs) {
-                         return lhs.crit == rhs.crit ? lru_comparator<BLOCK, BLOCK>()(lhs, rhs) : lhs.crit < rhs.crit;
-                       }));
+  auto candidates = std::vector<uint32_t>(NUM_WAY);
+  std::iota(std::begin(candidates), std::end(candidates), 0);
+  candidates.erase(std::remove_if(std::begin(candidates), std::end(candidates), [=](uint32_t way) { return current_set[way].crit < MSHR.begin()->crit; }),
+                   std::end(candidates));
+
+  // all ways are more critical than the new line, fall back on lru
+  if (candidates.empty()) {
+    candidates.resize(NUM_WAY);
+    std::iota(std::begin(candidates), std::end(candidates), 0);
+  }
+
+  return *std::max_element(std::begin(candidates), std::end(candidates),
+                           [=](uint32_t lhs, uint32_t rhs) { return lru_comparator<BLOCK, BLOCK>()(current_set[lhs], current_set[rhs]); });
 }
 
 // called on every cache hit and cache fill
