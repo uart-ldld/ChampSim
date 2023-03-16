@@ -958,10 +958,21 @@ int O3_CPU::do_translate_load(std::vector<LSQ_ENTRY>::iterator lq_it)
 namespace
 {
 
-bool has_dependent_load(champsim::circular_buffer<ooo_model_instr>::iterator ins)
+template <typename Pred>
+bool has_dependent_instruction(champsim::circular_buffer<ooo_model_instr>::iterator ins, Pred pred)
 {
   return std::any_of(std::begin(ins->registers_instrs_depend_on_me), std::end(ins->registers_instrs_depend_on_me),
-                     [](auto dependent_ins) { return (dependent_ins->is_memory && dependent_ins->source_memory[0]) || has_dependent_load(dependent_ins); });
+                     [=](auto dependent_ins) { return pred(dependent_ins) || has_dependent_instruction(dependent_ins, pred); });
+}
+
+bool has_dependent_load(champsim::circular_buffer<ooo_model_instr>::iterator ins)
+{
+  return has_dependent_instruction(ins, [](auto dependent_ins) { return dependent_ins->is_memory && dependent_ins->source_memory[0]; });
+}
+
+bool has_dependent_branch(champsim::circular_buffer<ooo_model_instr>::iterator ins)
+{
+  return has_dependent_instruction(ins, [](auto dependent_ins) { return dependent_ins->is_branch; });
 }
 
 void set_child_crit(champsim::circular_buffer<ooo_model_instr>::iterator ins, uint8_t crit)
@@ -992,17 +1003,26 @@ int O3_CPU::execute_load(std::vector<LSQ_ENTRY>::iterator lq_it)
   data_packet.asid[1] = lq_it->asid[1];
   data_packet.to_return = {&L1D_bus};
   data_packet.lq_index_depend_on_me = {lq_it};
-  if (has_dependent_load(lq_it->rob_index)) {
-    data_packet.crit = lq_it->rob_index->crit == std::numeric_limits<uint8_t>::max() ? 0 : lq_it->rob_index->crit;
-  } else {
-    data_packet.crit = lq_it->rob_index->crit;
+
+  data_packet.crit = std::numeric_limits<uint8_t>::max();
+  if (LOAD_LOAD_CRITICALITY) {
+    if (has_dependent_load(lq_it->rob_index)) {
+      data_packet.crit = lq_it->rob_index->crit == std::numeric_limits<uint8_t>::max() ? 0 : lq_it->rob_index->crit;
+    } else {
+      data_packet.crit = lq_it->rob_index->crit;
+    }
+
+    if (data_packet.crit != std::numeric_limits<uint8_t>::max()) {
+      set_child_crit(lq_it->rob_index, data_packet.crit);
+    }
+    data_packet.crit = data_packet.crit < THRESHOLD_CRITICALITY ? std::numeric_limits<uint8_t>::max() : data_packet.crit;
   }
 
-  if (data_packet.crit != std::numeric_limits<uint8_t>::max()) {
-    set_child_crit(lq_it->rob_index, data_packet.crit);
+  if (LOAD_BRANCH_CRITICALITY) {
+    if (has_dependent_branch(lq_it->rob_index)) {
+      data_packet.crit = 0;
+    }
   }
-
-  data_packet.crit = data_packet.crit < THRESHOLD_CRITICALITY ? std::numeric_limits<uint8_t>::max() : data_packet.crit;
 
   int rq_index = L1D_bus.lower_level->add_rq(&data_packet);
 
