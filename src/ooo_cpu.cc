@@ -1006,16 +1006,17 @@ int O3_CPU::execute_load(std::vector<LSQ_ENTRY>::iterator lq_it)
 
   data_packet.crit = std::numeric_limits<uint8_t>::max();
   if (LOAD_LOAD_CRITICALITY) {
-    if (has_dependent_load(lq_it->rob_index)) {
-      data_packet.crit = lq_it->rob_index->crit == std::numeric_limits<uint8_t>::max() ? 0 : lq_it->rob_index->crit;
-    } else {
-      data_packet.crit = lq_it->rob_index->crit;
+    auto ins = lq_it->rob_index;
+    if (has_dependent_load(ins)) {
+      if (ins->crit == std::numeric_limits<uint8_t>::max()) {
+        ins->crit = 0;
+      }
+      set_child_crit(ins, ins->crit);
     }
 
-    if (data_packet.crit != std::numeric_limits<uint8_t>::max()) {
-      set_child_crit(lq_it->rob_index, data_packet.crit);
+    if (ins->crit >= THRESHOLD_CRITICALITY) {
+      data_packet.crit = ins->crit;
     }
-    data_packet.crit = data_packet.crit < THRESHOLD_CRITICALITY ? std::numeric_limits<uint8_t>::max() : data_packet.crit;
   }
 
   if (LOAD_BRANCH_CRITICALITY) {
